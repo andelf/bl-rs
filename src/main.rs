@@ -112,6 +112,17 @@ fn main() -> Result<()> {
     let boot_info = serial.read_bytes(len_payload as usize)?;
     println!("get_boot_info => {:02x?}", boot_info);
 
+    println!(
+        "BootRom version {}.{}.{}.{}",
+        boot_info[0], boot_info[1], boot_info[2], boot_info[3]
+    );
+
+    let sign = boot_info[4];
+    let encrypt = boot_info[5];
+    println!("sign => {}", sign);
+    println!("encrypt => {}", encrypt);
+
+    // BL616, 6bytes, other 8bytes
     let chip_id = [
         boot_info[17],
         boot_info[16],
