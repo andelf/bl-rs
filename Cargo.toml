@@ -17,5 +17,6 @@ license = "MIT/Apache-2.0"
 [dependencies]
 anyhow = "1.0.69"
 crc = "3.0.1"
+log = "0.4.17"
 serialport = "4.2.0"
 thiserror = "1.0.38"
