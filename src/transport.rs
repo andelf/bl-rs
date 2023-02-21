@@ -23,8 +23,12 @@ pub trait Transport {
             return Ok(C::Response::from_raw(&[])?);
         }
         let len_payload = self.read_u16()?;
-        let payload = self.read_bytes(len_payload as usize)?;
-        C::Response::from_raw(&payload)
+        if len_payload != 0 {
+            let payload = self.read_bytes(len_payload as usize)?;
+            C::Response::from_raw(&payload)
+        } else {
+            Ok(C::Response::from_raw(&[])?)
+        }
     }
 
     /// len for UART
@@ -85,7 +89,7 @@ impl Transport for Box<dyn SerialPort> {
         if n != buf.len() {
             return Err(Error::Custom("write_bytes: n != buf.len()".to_string()));
         }
-        println!("D: write {} => {:02x?}", n, buf);
+        println!("D: write {} => {}", n, hex::encode(&buf));
         Ok(())
     }
 }
