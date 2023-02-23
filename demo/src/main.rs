@@ -2,13 +2,304 @@
 #![no_main]
 #![allow(dead_code, non_camel_case_types, non_snake_case)]
 
+use core::arch::global_asm;
 use core::mem;
 use core::ptr;
+// use riscv_rt::Vector;
 
 use bl616_pac as pac;
 use pac::glb::gpio_config::PIN_MODE_A;
-use panic_halt as _;
 use riscv::register::mhartid;
+
+use core::panic::PanicInfo;
+
+#[panic_handler]
+fn panic(_panic: &PanicInfo<'_>) -> ! {
+    loop {}
+}
+
+// #[link_section = "__entry"]
+global_asm!(
+    r#"
+.section .init
+.align  2
+.globl  __start
+    .type   __start, %function
+__start:
+.option push
+.option norelax
+    la      gp, __global_pointer$
+.option pop
+    csrci   mstatus, 8
+halt:
+    j halt
+"#
+);
+
+extern "C" {
+    fn UserSoft();
+    fn SupervisorSoft();
+    fn MachineSoft();
+    fn UserTimer();
+    fn SupervisorTimer();
+    fn MachineTimer();
+    fn UserExternal();
+    fn SupervisorExternal();
+    fn MachineExternal();
+    fn DefaultHandler();
+}
+
+union Vector {
+    handler: unsafe extern "C" fn(),
+    reserved: usize,
+}
+
+#[repr(align(128))] // SDK says 64
+pub struct Vectors([Vector; 80]);
+
+#[no_mangle]
+#[link_section = ".vector"]
+pub static __VECTOR: Vectors = Vectors([
+    Vector { handler: UserSoft },
+    Vector {
+        handler: SupervisorSoft,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    // 3
+    Vector {
+        handler: MachineSoft,
+    },
+    Vector { handler: UserTimer },
+    Vector {
+        handler: SupervisorTimer,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: MachineTimer,
+    },
+    Vector {
+        handler: UserExternal,
+    },
+    Vector {
+        handler: SupervisorExternal,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    // 11
+    Vector {
+        handler: MachineExternal,
+    },
+    // 12
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+    Vector {
+        handler: DefaultHandler,
+    },
+]);
 
 #[riscv_rt::pre_init]
 unsafe fn pre_init() {}
@@ -123,6 +414,7 @@ unsafe fn bflb_gpio_init() {
 }
 
 #[riscv_rt::entry]
+// #[link_section = "section_name"]
 unsafe fn main() -> ! {
     unsafe {
         let start_addr: u32 = 0x90015800;

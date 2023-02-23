@@ -29,10 +29,12 @@ _stext = ORIGIN(FLASH) + 0xC00;
 
 
 SECTIONS {
-    .text.entry :
+    .init :
     {
         . = ORIGIN(FLASH);
         LONG(__J_0XC00);
+        KEEP (*(SORT_NONE(.init)))
+        KEEP (*(SORT_NONE(.vector)))
     } > FLASH
 
     .rftlv.tool :
